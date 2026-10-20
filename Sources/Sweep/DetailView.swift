@@ -155,10 +155,17 @@ struct PillButtonStyle: ButtonStyle {
         @Environment(\.isEnabled) private var isEnabled
         @State private var isHovered = false
 
+        private var isHighlighted: Bool { isHovered && isEnabled }
+
+        /// Nos chips, o ícone cinza vai para a cor principal no hover; cores de destaque (ex.: laranja) se mantêm.
+        private var foreground: Color {
+            style.solidFill == nil && isHighlighted && style.foreground == .secondary ? .primary : style.foreground
+        }
+
         var body: some View {
             configuration.label
                 .font((style.height < 40 ? Font.callout : Font.body).weight(style.weight))
-                .foregroundStyle(style.foreground)
+                .foregroundStyle(foreground)
                 .padding(.horizontal, style.iconOnly ? 0 : (style.height < 40 ? 12 : 16))
                 .frame(width: style.iconOnly ? style.height : nil, height: style.height)
                 .background {
@@ -166,11 +173,12 @@ struct PillButtonStyle: ButtonStyle {
                     if let fill = style.solidFill {
                         shape.fill(fill)
                     } else {
-                        Color.clear.chipSurface(shape)
+                        Color.clear.chipSurface(shape, fill: isHighlighted ? 0.14 : 0.08)
                     }
                 }
                 .contentShape(RoundedRectangle(cornerRadius: 10))
-                .brightness(isHovered && isEnabled ? 0.06 : 0)
+                // Brilho só nos botões de cor sólida: nos chips translúcidos ele apagava o ícone.
+                .brightness(style.solidFill != nil && isHighlighted ? 0.06 : 0)
                 .scaleEffect(configuration.isPressed ? 0.96 : 1)
                 .opacity(isEnabled ? 1 : 0.45)
                 .onHover { isHovered = $0 }
