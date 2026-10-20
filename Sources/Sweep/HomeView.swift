@@ -198,8 +198,7 @@ struct KeyHint: View {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .semibold))
                 .frame(width: 26, height: 22)
-                .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.1)))
+                .chipSurface(RoundedRectangle(cornerRadius: 6))
             Text(label)
                 .font(.callout)
         }
@@ -226,8 +225,8 @@ struct SortPicker: View {
                         .frame(height: 24)
                         .background {
                             if selection == order {
-                                Capsule()
-                                    .fill(Color.primary.opacity(0.13))
+                                Color.clear
+                                    .chipSurface(Capsule(), fill: 0.13)
                                     .matchedGeometryEffect(id: "selection", in: namespace)
                             }
                         }
@@ -238,6 +237,14 @@ struct SortPicker: View {
             }
         }
         .padding(3)
-        .background(Color.primary.opacity(0.05), in: Capsule())
+        .chipSurface(Capsule(), fill: 0.05)
+    }
+}
+
+extension View {
+    /// Fundo e borda sutil padrão dos chips (teclas da legenda, seletor de ordem).
+    func chipSurface<S: InsettableShape>(_ shape: S, fill: Double = 0.08) -> some View {
+        background(Color.primary.opacity(fill), in: shape)
+            .overlay(shape.strokeBorder(Color.primary.opacity(0.1)))
     }
 }
