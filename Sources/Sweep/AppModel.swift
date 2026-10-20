@@ -9,6 +9,36 @@ struct RemovalResult {
     let failures: [String]
 }
 
+enum SortOrder: String, CaseIterable, Identifiable {
+    case largest, smallest, name
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .largest: "Maiores primeiro"
+        case .smallest: "Menores primeiro"
+        case .name: "Nome"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .largest: "arrow.down"
+        case .smallest: "arrow.up"
+        case .name: "textformat"
+        }
+    }
+
+    func areInIncreasingOrder(_ a: InstalledApp, _ b: InstalledApp) -> Bool {
+        switch self {
+        case .largest: a.size > b.size
+        case .smallest: a.size < b.size
+        case .name: a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+        }
+    }
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     @Published var apps: [InstalledApp] = []
@@ -29,10 +59,15 @@ final class AppModel: ObservableObject {
 
     private var signature: Signature?
 
-    /// Até 5 apps: os maiores quando a busca está vazia, senão os que combinam com a busca.
+    @Published var sortOrder: SortOrder = .largest {
+        didSet { highlighted = 0 }
+    }
+
+    /// Todos os apps na ordem escolhida; com busca, só os que combinam, os mais relevantes primeiro.
     var visibleApps: [InstalledApp] {
+        let sorted = apps.sorted(by: sortOrder.areInIncreasingOrder)
         let query = search.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return Array(apps.sorted { $0.size > $1.size }.prefix(5)) }
+        guard !query.isEmpty else { return sorted }
 
         // Nome que começa com a busca vem antes de palavra que começa com ela, que vem antes de "contém".
         func rank(_ app: InstalledApp) -> Int? {
@@ -41,8 +76,11 @@ final class AppModel: ObservableObject {
             if range.lowerBound == app.name.startIndex { return 0 }
             return app.name[app.name.index(before: range.lowerBound)] == " " ? 1 : 2
         }
-        let ranked = apps.compactMap { app in rank(app).map { (app, $0) } }
-        return Array(ranked.sorted { $0.1 < $1.1 }.map(\.0).prefix(5))
+        // Ordenação estável: dentro da mesma relevância, vale a ordem escolhida.
+        let ranked = sorted.compactMap { app in rank(app).map { (app, $0) } }
+        return ranked.enumerated()
+            .sorted { ($0.element.1, $0.offset) < ($1.element.1, $1.offset) }
+            .map(\.element.0)
     }
 
     var highlightedApp: InstalledApp? {

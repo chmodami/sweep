@@ -12,41 +12,90 @@ struct HomeView: View {
             searchField
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(model.search.isEmpty ? "Maiores apps" : "Resultados")
+                HStack {
+                    HStack(spacing: 6) {
+                        Text(model.search.isEmpty ? "Apps" : "Resultados")
+                        if !apps.isEmpty {
+                            Text("\(apps.count)").monospacedDigit().foregroundStyle(.tertiary)
+                        }
+                    }
                     .font(.caption.weight(.semibold))
                     .textCase(.uppercase)
                     .tracking(0.8)
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 14)
+
+                    Spacer()
+
+                    Menu {
+                        Picker("Ordenar", selection: $model.sortOrder) {
+                            ForEach(SortOrder.allCases) { order in
+                                Label(order.title, systemImage: order.symbol).tag(order)
+                            }
+                        }
+                        .pickerStyle(.inline)
+                        .labelsHidden()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: model.sortOrder.symbol)
+                                .contentTransition(.symbolEffect(.replace))
+                            Text(model.sortOrder.title)
+                            Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
+                        }
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.primary.opacity(0.06), in: Capsule())
+                        .contentShape(Capsule())
+                    }
+                    .menuStyle(.button)
+                    .buttonStyle(.plain)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                }
+                .padding(.leading, 14)
+                .padding(.trailing, 4)
 
                 if apps.isEmpty {
                     Text(model.apps.isEmpty ? "Carregando apps…" : "Nenhum app encontrado")
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
+                    Spacer(minLength: 0)
                 } else {
-                    VStack(spacing: 2) {
-                        ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
-                            AppRow(
-                                app: app,
-                                fraction: Double(app.size) / Double(largest),
-                                isHighlighted: index == model.highlighted
-                            )
-                            .onHover { if $0 { model.highlighted = index } }
-                            .onTapGesture { model.select(app) }
-                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 2) {
+                                ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
+                                    AppRow(
+                                        app: app,
+                                        fraction: Double(app.size) / Double(largest),
+                                        isHighlighted: index == model.highlighted
+                                    )
+                                    .id(app.id)
+                                    .onHover { if $0 { model.highlighted = index } }
+                                    .onTapGesture { model.select(app) }
+                                }
+                            }
+                            .padding(.bottom, 12)
                         }
+                        .scrollIndicators(.never)
+                        .mask(fadeBelowFirstRows)
+                        .onChange(of: model.highlighted) {
+                            // Navegando pelo teclado, mantém a linha destacada entre as 5 nítidas.
+                            guard let app = model.highlightedApp else { return }
+                            withAnimation(.smooth(duration: 0.2)) { proxy.scrollTo(app.id, anchor: .center) }
+                        }
+                        .onChange(of: model.search) { proxy.scrollTo(apps.first?.id, anchor: .top) }
+                        .onChange(of: model.sortOrder) { withAnimation(.smooth(duration: 0.25)) { proxy.scrollTo(model.visibleApps.first?.id, anchor: .top) } }
                     }
                 }
             }
-            Spacer(minLength: 0)
 
-            HStack(spacing: 14) {
-                Label("navegar", systemImage: "arrow.up.arrow.down")
-                Label("abrir", systemImage: "return")
+            HStack(spacing: 20) {
+                KeyHint(symbol: "arrow.up.arrow.down", label: "navegar")
+                KeyHint(symbol: "return", label: "abrir")
             }
-            .font(.caption)
-            .foregroundStyle(.tertiary)
             .frame(maxWidth: .infinity)
         }
         .padding(.horizontal, 22)
@@ -54,6 +103,25 @@ struct HomeView: View {
         .padding(.bottom, 18)
         .animation(.smooth(duration: 0.22), value: apps.map(\.id))
         .onAppear { isSearchFocused = true }
+    }
+
+    /// As 5 primeiras linhas visíveis ficam nítidas; as de baixo vão sumindo até quase transparentes.
+    private var fadeBelowFirstRows: some View {
+        GeometryReader { proxy in
+            let rowsHeight = 5 * 62.0 // altura de 5 linhas (60 pt + 2 pt de espaço)
+            let start = min(rowsHeight / max(proxy.size.height, 1), 1)
+            let end = min((rowsHeight + 70) / max(proxy.size.height, 1), 1)
+            LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0),
+                    .init(color: .black, location: start),
+                    .init(color: .black.opacity(0.12), location: end),
+                    .init(color: .black.opacity(0.06), location: 1),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
     }
 
     private var searchField: some View {
@@ -135,5 +203,24 @@ struct SizeBar: View {
             }
         }
         .frame(height: 4)
+    }
+}
+
+/// Tecla desenhada + legenda, para os atalhos do rodapé.
+struct KeyHint: View {
+    let symbol: String
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .frame(width: 26, height: 22)
+                .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.1)))
+            Text(label)
+                .font(.callout)
+        }
+        .foregroundStyle(.secondary)
     }
 }
