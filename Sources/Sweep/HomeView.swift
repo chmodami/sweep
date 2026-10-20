@@ -28,32 +28,7 @@ struct HomeView: View {
 
                     Spacer()
 
-                    Menu {
-                        Picker("Ordenar", selection: $model.sortOrder) {
-                            ForEach(SortOrder.allCases) { order in
-                                Label(order.title, systemImage: order.symbol).tag(order)
-                            }
-                        }
-                        .pickerStyle(.inline)
-                        .labelsHidden()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: model.sortOrder.symbol)
-                                .contentTransition(.symbolEffect(.replace))
-                            Text(model.sortOrder.title)
-                            Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold))
-                        }
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.primary.opacity(0.06), in: Capsule())
-                        .contentShape(Capsule())
-                    }
-                    .menuStyle(.button)
-                    .buttonStyle(.plain)
-                    .menuIndicator(.hidden)
-                    .fixedSize()
+                    SortPicker(selection: $model.sortOrder)
                 }
                 .padding(.leading, 14)
                 .padding(.trailing, 4)
@@ -229,5 +204,40 @@ struct KeyHint: View {
                 .font(.callout)
         }
         .foregroundStyle(.secondary)
+    }
+}
+
+/// Seletor segmentado da ordem da lista, com destaque que desliza entre as opções.
+struct SortPicker: View {
+    @Binding var selection: SortOrder
+    @Namespace private var namespace
+
+    var body: some View {
+        // Formas concêntricas: trilho de 30 pt e opções de 24 pt com 3 pt de margem.
+        HStack(spacing: 0) {
+            ForEach(SortOrder.allCases) { order in
+                Button {
+                    withAnimation(.spring(duration: 0.3, bounce: 0.15)) { selection = order }
+                } label: {
+                    Text(order.shortTitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(selection == order ? .primary : .secondary)
+                        .padding(.horizontal, 11)
+                        .frame(height: 24)
+                        .background {
+                            if selection == order {
+                                Capsule()
+                                    .fill(Color.primary.opacity(0.13))
+                                    .matchedGeometryEffect(id: "selection", in: namespace)
+                            }
+                        }
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .help(order.title)
+            }
+        }
+        .padding(3)
+        .background(Color.primary.opacity(0.05), in: Capsule())
     }
 }

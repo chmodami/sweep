@@ -22,11 +22,11 @@ enum SortOrder: String, CaseIterable, Identifiable {
         }
     }
 
-    var symbol: String {
+    var shortTitle: String {
         switch self {
-        case .largest: "arrow.down"
-        case .smallest: "arrow.up"
-        case .name: "textformat"
+        case .largest: "Maiores"
+        case .smallest: "Menores"
+        case .name: "A–Z"
         }
     }
 
