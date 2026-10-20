@@ -118,20 +118,20 @@ struct DetailView: View {
     }
 
     private var footer: some View {
-        HStack(spacing: 8) {
+        // Formas concêntricas: barra de 52 pt e pílulas de 40 pt com a mesma margem de 6 pt em todos os lados.
+        HStack(spacing: 6) {
             Button {
                 withAnimation(.smooth(duration: 0.2)) { model.moveToTrash.toggle() }
             } label: {
                 Label(model.moveToTrash ? "Para a Lixeira" : "Apagar de vez",
                       systemImage: model.moveToTrash ? "trash" : "flame.fill")
                     .contentTransition(.symbolEffect(.replace))
-                    .font(.callout.weight(.medium))
-                    .foregroundStyle(model.moveToTrash ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.orange))
-                    .padding(.horizontal, 12)
-                    .frame(maxHeight: .infinity)
-                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PillButtonStyle(
+                fill: AnyShapeStyle(Color.primary.opacity(0.07)),
+                foreground: model.moveToTrash ? .secondary : .orange,
+                weight: .medium
+            ))
             .help(model.moveToTrash
                   ? "Os arquivos vão para a Lixeira. Clique para apagar permanentemente."
                   : "Os arquivos serão apagados permanentemente. Clique para usar a Lixeira.")
@@ -147,23 +147,53 @@ struct DetailView: View {
                     }
                     Text(model.isRemoving ? "Removendo…" : "Remover")
                 }
-                .font(.body.weight(.semibold))
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 4)
             }
-            .buttonStyle(.glassProminent)
-            .tint(.red)
-            .controlSize(.large)
+            .buttonStyle(PillButtonStyle(fill: AnyShapeStyle(Color.red.gradient), foreground: .white))
             .keyboardShortcut(.delete, modifiers: .command)
             .help("Remover os itens selecionados (⌘⌫)")
             .disabled(model.checkedItems.isEmpty || model.isScanning || model.isRemoving)
         }
-        .padding(.leading, 6)
-        .padding(.trailing, 7)
-        .frame(height: 54)
+        .padding(6)
+        .frame(height: 52)
         .glassEffect(.regular, in: .capsule)
         .padding(.horizontal, 22)
         .padding(.top, 10)
         .padding(.bottom, 20)
+    }
+}
+
+/// Pílula de 40 pt usada na barra inferior, com realce ao passar o mouse e ao pressionar.
+struct PillButtonStyle: ButtonStyle {
+    let fill: AnyShapeStyle
+    let foreground: Color
+    var weight: Font.Weight = .semibold
+
+    func makeBody(configuration: Configuration) -> some View {
+        Pill(configuration: configuration, style: self)
+    }
+
+    private struct Pill: View {
+        let configuration: Configuration
+        let style: PillButtonStyle
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var isHovered = false
+
+        var body: some View {
+            configuration.label
+                .font(.body.weight(style.weight))
+                .foregroundStyle(style.foreground)
+                .padding(.horizontal, 16)
+                .frame(height: 40)
+                .background(style.fill, in: Capsule())
+                .contentShape(Capsule())
+                .brightness(isHovered && isEnabled ? 0.06 : 0)
+                .scaleEffect(configuration.isPressed ? 0.96 : 1)
+                .opacity(isEnabled ? 1 : 0.45)
+                .onHover { isHovered = $0 }
+                .animation(.smooth(duration: 0.15), value: configuration.isPressed)
+                .animation(.smooth(duration: 0.15), value: isHovered)
+        }
     }
 }
 
