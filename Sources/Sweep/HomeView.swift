@@ -3,6 +3,8 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var model: AppModel
     @FocusState private var isSearchFocused: Bool
+    /// Linha para onde rolar; só muda pelas setas, para o mouse não fazer a lista andar sozinha.
+    @State private var scrollTarget: URL?
 
     var body: some View {
         let apps = model.visibleApps
@@ -81,10 +83,10 @@ struct HomeView: View {
                         }
                         .scrollIndicators(.never)
                         .mask(fadeBelowFirstRows)
-                        .onChange(of: model.highlighted) {
-                            // Navegando pelo teclado, mantém a linha destacada entre as 5 nítidas.
-                            guard let app = model.highlightedApp else { return }
-                            withAnimation(.smooth(duration: 0.2)) { proxy.scrollTo(app.id, anchor: .center) }
+                        .onChange(of: scrollTarget) {
+                            // Navegando pelo teclado, mantém a linha destacada entre as nítidas.
+                            guard let scrollTarget else { return }
+                            withAnimation(.smooth(duration: 0.2)) { proxy.scrollTo(scrollTarget, anchor: .center) }
                         }
                         .onChange(of: model.search) { proxy.scrollTo(apps.first?.id, anchor: .top) }
                         .onChange(of: model.sortOrder) { withAnimation(.smooth(duration: 0.25)) { proxy.scrollTo(model.visibleApps.first?.id, anchor: .top) } }
@@ -108,9 +110,9 @@ struct HomeView: View {
     /// As 5 primeiras linhas visíveis ficam nítidas; as de baixo vão sumindo até quase transparentes.
     private var fadeBelowFirstRows: some View {
         GeometryReader { proxy in
-            let rowsHeight = 5 * 62.0 // altura de 5 linhas (60 pt + 2 pt de espaço)
+            let rowsHeight = 4.4 * 62.0 // o fade começa no meio da 5ª linha (cada linha: 60 pt + 2 pt de espaço)
             let start = min(rowsHeight / max(proxy.size.height, 1), 1)
-            let end = min((rowsHeight + 70) / max(proxy.size.height, 1), 1)
+            let end = min((rowsHeight + 90) / max(proxy.size.height, 1), 1)
             LinearGradient(
                 stops: [
                     .init(color: .black, location: 0),
@@ -124,6 +126,11 @@ struct HomeView: View {
         }
     }
 
+    private func moveHighlight(by offset: Int) {
+        model.highlighted = min(max(model.highlighted + offset, 0), max(model.visibleApps.count - 1, 0))
+        scrollTarget = model.highlightedApp?.id
+    }
+
     private var searchField: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
@@ -135,8 +142,8 @@ struct HomeView: View {
                 .focused($isSearchFocused)
                 // Lê a lista atual na hora da tecla, não a capturada num render anterior.
                 .onSubmit { if let app = model.highlightedApp { model.select(app) } }
-                .onKeyPress(.downArrow) { model.highlighted = min(model.highlighted + 1, model.visibleApps.count - 1); return .handled }
-                .onKeyPress(.upArrow) { model.highlighted = max(model.highlighted - 1, 0); return .handled }
+                .onKeyPress(.downArrow) { moveHighlight(by: 1); return .handled }
+                .onKeyPress(.upArrow) { moveHighlight(by: -1); return .handled }
             if !model.search.isEmpty {
                 Button { model.search = "" } label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.tertiary)
