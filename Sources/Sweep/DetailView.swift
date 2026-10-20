@@ -51,9 +51,11 @@ struct DetailView: View {
             .scrollIndicators(.never)
             .scrollEdgeEffectStyle(.soft, for: .all)
             .animation(.smooth(duration: 0.25), value: model.isScanning)
-
-            footer
-                .opacity(isConfirming ? 0 : 1)
+            // A barra flutua sobre a lista, que rola por baixo do vidro.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                footer
+                    .opacity(isConfirming ? 0 : 1)
+            }
         }
         .overlay {
             if isConfirming {
@@ -116,9 +118,28 @@ struct DetailView: View {
     }
 
     private var footer: some View {
-        VStack(spacing: 12) {
+        HStack(spacing: 8) {
+            Button {
+                withAnimation(.smooth(duration: 0.2)) { model.moveToTrash.toggle() }
+            } label: {
+                Label(model.moveToTrash ? "Para a Lixeira" : "Apagar de vez",
+                      systemImage: model.moveToTrash ? "trash" : "flame.fill")
+                    .contentTransition(.symbolEffect(.replace))
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(model.moveToTrash ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.orange))
+                    .padding(.horizontal, 12)
+                    .frame(maxHeight: .infinity)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(model.moveToTrash
+                  ? "Os arquivos vão para a Lixeira. Clique para apagar permanentemente."
+                  : "Os arquivos serão apagados permanentemente. Clique para usar a Lixeira.")
+
+            Spacer(minLength: 0)
+
             Button { isConfirming = true } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 7) {
                     if model.isRemoving {
                         ProgressView().controlSize(.small)
                     } else {
@@ -127,22 +148,21 @@ struct DetailView: View {
                     Text(model.isRemoving ? "Removendo…" : "Remover")
                 }
                 .font(.body.weight(.semibold))
-                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 8)
             }
             .buttonStyle(.glassProminent)
             .tint(.red)
-            .controlSize(.extraLarge)
+            .controlSize(.large)
+            .keyboardShortcut(.delete, modifiers: .command)
+            .help("Remover os itens selecionados (⌘⌫)")
             .disabled(model.checkedItems.isEmpty || model.isScanning || model.isRemoving)
-
-            Toggle("Mover para a Lixeira", isOn: $model.moveToTrash)
-                .toggleStyle(.switch)
-                .controlSize(.mini)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .help("Desligue para apagar permanentemente")
         }
+        .padding(.leading, 6)
+        .padding(.trailing, 7)
+        .frame(height: 54)
+        .glassEffect(.regular, in: .capsule)
         .padding(.horizontal, 22)
-        .padding(.top, 14)
+        .padding(.top, 10)
         .padding(.bottom, 20)
     }
 }
