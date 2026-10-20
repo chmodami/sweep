@@ -4,6 +4,12 @@ A native macOS app that uninstalls apps **completely**, not just the `.app` bund
 
 Dragging an app to the Trash leaves caches, preferences, containers, logs and background services behind in `~/Library`. Sweep finds those leftovers, shows you each one with its size, and removes only what you approve.
 
+<p align="center">
+  <img src="docs/screenshots/home.png" width="270" alt="App list sorted by size, with the accumulated junk card">
+  <img src="docs/screenshots/details.png" width="270" alt="An app's details: the app bundle and its leftover files, ready to remove">
+  <img src="docs/screenshots/junk.png" width="270" alt="Junk cleanup: storage overview and what the scan looks for">
+</p>
+
 ## Features
 
 **Full uninstall**
