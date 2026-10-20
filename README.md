@@ -30,6 +30,10 @@ Dragging an app to the Trash leaves caches, preferences, containers, logs and ba
 - A single compact window built with SwiftUI and Liquid Glass. Each screen's accent color comes from the app's icon.
 - Localized in English, Portuguese (Brazil) and Spanish. It follows the system language and falls back to English.
 
+## Download
+
+Get the latest signed and notarized `Sweep-x.y.z.dmg` from [Releases](https://github.com/chmodami/sweep/releases), open it and drag Sweep to Applications. It's a universal app for Apple silicon and Intel Macs.
+
 ## Requirements
 
 - macOS 26 or later
@@ -45,6 +49,19 @@ cp -R build/Sweep.app /Applications/
 ```
 
 `build.sh` compiles with SwiftPM in release mode, assembles the `.app` bundle with its resources and translations, and signs it ad hoc.
+
+### Release
+
+`release.sh` builds a universal binary and signs it with your Developer ID and the hardened runtime. It then packages `build/Sweep-<version>.dmg`, notarizes it with Apple and staples the ticket:
+
+```sh
+# once: store notarization credentials in the Keychain
+xcrun notarytool store-credentials sweep-notary --apple-id <email> --team-id <TEAM_ID>
+
+./release.sh
+```
+
+The version comes from `CFBundleShortVersionString` in `Resources/Info.plist`.
 
 ## Permissions
 
@@ -87,6 +104,8 @@ Sources/Sweep/
   ResultView.swift   Summary after removing
   Theme.swift        Categories, accent colors, chart palette, chip style
 Resources/           Info.plist, icon, *.lproj translations
+build.sh             Builds build/Sweep.app
+release.sh           Signed, notarized DMG
 ```
 
 To add a language, create `Resources/<code>.lproj/Localizable.strings` with the translated keys, add the code to `CFBundleLocalizations` in `Info.plist`, and run `./build.sh`.

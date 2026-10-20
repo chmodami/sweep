@@ -28,7 +28,7 @@
     <key>CFBundleExecutable</key>
     <string>Sweep</string>
     <key>CFBundleIdentifier</key>
-    <string>local.sweep</string>
+    <string>com.chmodami.sweep</string>
     <key>CFBundleName</key>
     <string>Sweep</string>
     <key>CFBundleDisplayName</key>
@@ -36,7 +36,7 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>1.0.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleIconFile</key>
