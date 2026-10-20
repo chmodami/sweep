@@ -11,11 +11,14 @@ struct DetailView: View {
             HStack {
                 Button { model.close() } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .semibold))
-                        .frame(width: 30, height: 30)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 32, height: 32)
+                        .chipSurface(RoundedRectangle(cornerRadius: 10))
+                        .contentShape(RoundedRectangle(cornerRadius: 10))
                 }
-                .buttonStyle(.glass)
-                .buttonBorderShape(.circle)
+                .buttonStyle(.plain)
+                .help("Voltar")
                 .disabled(model.isRemoving)
                 Spacer()
             }
@@ -51,7 +54,7 @@ struct DetailView: View {
             .scrollIndicators(.never)
             .scrollEdgeEffectStyle(.soft, for: .all)
             .animation(.smooth(duration: 0.25), value: model.isScanning)
-            // A barra flutua sobre a lista, que rola por baixo do vidro.
+            // A barra flutua sobre a lista, que rola por baixo dela.
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 footer
                     .opacity(isConfirming ? 0 : 1)
@@ -118,7 +121,7 @@ struct DetailView: View {
     }
 
     private var footer: some View {
-        // Formas concêntricas: barra de 52 pt e pílulas de 40 pt com a mesma margem de 6 pt em todos os lados.
+        // Cantos concêntricos: barra de 52 pt com raio 16 e botões de 40 pt com raio 10 (16 − 6 de margem).
         HStack(spacing: 6) {
             Button {
                 withAnimation(.smooth(duration: 0.2)) { model.moveToTrash.toggle() }
@@ -128,7 +131,6 @@ struct DetailView: View {
                     .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(PillButtonStyle(
-                fill: AnyShapeStyle(Color.primary.opacity(0.07)),
                 foreground: model.moveToTrash ? .secondary : .orange,
                 weight: .medium
             ))
@@ -149,25 +151,27 @@ struct DetailView: View {
                 }
                 .padding(.horizontal, 4)
             }
-            .buttonStyle(PillButtonStyle(fill: AnyShapeStyle(Color.red.gradient), foreground: .white))
+            .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .red))
             .keyboardShortcut(.delete, modifiers: .command)
             .help("Remover os itens selecionados (⌘⌫)")
             .disabled(model.checkedItems.isEmpty || model.isScanning || model.isRemoving)
         }
         .padding(6)
         .frame(height: 52)
-        .glassEffect(.regular, in: .capsule)
+        .chipSurface(RoundedRectangle(cornerRadius: 16), fill: 0.05)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal, 22)
         .padding(.top, 10)
         .padding(.bottom, 20)
     }
 }
 
-/// Pílula de 40 pt usada na barra inferior, com realce ao passar o mouse e ao pressionar.
+/// Botão de 40 pt e raio 10, com realce ao passar o mouse e ao pressionar.
+/// Sem `solidFill`, usa o fundo e a borda padrão dos chips.
 struct PillButtonStyle: ButtonStyle {
-    let fill: AnyShapeStyle
     let foreground: Color
     var weight: Font.Weight = .semibold
+    var solidFill: Color?
 
     func makeBody(configuration: Configuration) -> some View {
         Pill(configuration: configuration, style: self)
@@ -185,8 +189,15 @@ struct PillButtonStyle: ButtonStyle {
                 .foregroundStyle(style.foreground)
                 .padding(.horizontal, 16)
                 .frame(height: 40)
-                .background(style.fill, in: Capsule())
-                .contentShape(Capsule())
+                .background {
+                    let shape = RoundedRectangle(cornerRadius: 10)
+                    if let fill = style.solidFill {
+                        shape.fill(fill)
+                    } else {
+                        Color.clear.chipSurface(shape)
+                    }
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 10))
                 .brightness(isHovered && isEnabled ? 0.06 : 0)
                 .scaleEffect(configuration.isPressed ? 0.96 : 1)
                 .opacity(isEnabled ? 1 : 0.45)
@@ -236,7 +247,7 @@ struct ItemRow: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(category.color.gradient, in: RoundedRectangle(cornerRadius: 8))
+                        .background(category.color, in: RoundedRectangle(cornerRadius: 8))
                 }
             }
             .frame(width: 30, height: 30)
@@ -276,7 +287,7 @@ struct ItemRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color.primary.opacity(isHovered ? 0.08 : 0.05), in: RoundedRectangle(cornerRadius: 14))
+        .chipSurface(RoundedRectangle(cornerRadius: 14), fill: isHovered ? 0.08 : 0.05)
         .opacity(isOn ? 1 : 0.5)
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(.smooth(duration: 0.15)) { isOn.toggle() } }
@@ -302,7 +313,7 @@ struct ConfirmPanel: View {
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(width: 26, height: 26)
-                    .background(Circle().fill(Color.red.gradient))
+                    .background(Circle().fill(Color.red))
                     .overlay(Circle().strokeBorder(.black.opacity(0.25), lineWidth: 1))
                     .offset(x: 6, y: 6)
             }
@@ -321,22 +332,21 @@ struct ConfirmPanel: View {
                 Button(action: onCancel) {
                     Text("Cancelar").frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.glass)
+                .buttonStyle(PillButtonStyle(foreground: .primary, weight: .medium))
                 .keyboardShortcut(.cancelAction)
 
                 Button(action: onConfirm) {
-                    Text(confirmTitle).font(.body.weight(.semibold)).frame(maxWidth: .infinity)
+                    Text(confirmTitle).frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.glassProminent)
-                .tint(.red)
+                .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .red))
                 .keyboardShortcut(.defaultAction)
             }
-            .controlSize(.extraLarge)
         }
         .padding(.horizontal, 22)
         .padding(.top, 26)
         .padding(.bottom, 20)
         .frame(maxWidth: .infinity)
-        .glassEffect(.regular, in: .rect(cornerRadius: 30))
+        .chipSurface(RoundedRectangle(cornerRadius: 20), fill: 0.05)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
     }
 }
