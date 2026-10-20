@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "Faxina",
+    name: "Sweep",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(name: "Faxina", path: "Sources/Faxina")
+        .executableTarget(name: "Sweep", path: "Sources/Sweep")
     ]
 )

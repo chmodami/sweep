@@ -93,7 +93,7 @@ enum Remover {
         }
         let shell = commands.joined(separator: "; ")
         let script = """
-        do shell script "\(appleScriptEscape(shell))" with prompt "O Faxina precisa da sua senha para remover arquivos protegidos." with administrator privileges
+        do shell script "\(appleScriptEscape(shell))" with prompt "O Sweep precisa da sua senha para remover arquivos protegidos." with administrator privileges
         """
         let result = run("/usr/bin/osascript", ["-e", script])
         return result.status == 0 ? nil : result.output.trimmingCharacters(in: .whitespacesAndNewlines)

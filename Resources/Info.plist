@@ -4,14 +4,29 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>pt-BR</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Aplicativo</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>None</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.apple.application-bundle</string>
+            </array>
+        </dict>
+    </array>
     <key>CFBundleExecutable</key>
-    <string>Faxina</string>
+    <string>Sweep</string>
     <key>CFBundleIdentifier</key>
-    <string>local.faxina</string>
+    <string>local.sweep</string>
     <key>CFBundleName</key>
-    <string>Faxina</string>
+    <string>Sweep</string>
     <key>CFBundleDisplayName</key>
-    <string>Faxina</string>
+    <string>Sweep</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -27,6 +42,6 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>O Faxina usa o AppleScript para pedir sua senha ao remover arquivos protegidos do sistema.</string>
+    <string>O Sweep usa o AppleScript para pedir sua senha ao remover arquivos protegidos do sistema.</string>
 </dict>
 </plist>
