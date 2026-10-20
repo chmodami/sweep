@@ -127,6 +127,7 @@ final class AppModel: ObservableObject {
     func select(_ app: InstalledApp) {
         // A busca é mantida: limpá-la aqui trocava a lista no meio do fade e, ao voltar, os resultados continuam lá.
         result = nil
+        isShowingJunk = false
         selected = app
         scan(app)
     }

@@ -8,21 +8,33 @@ struct DetailView: View {
     var body: some View {
         let accent = Accent.color(for: app)
         VStack(spacing: 0) {
-            HStack {
-                Button { model.close() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 32, height: 32)
-                        .chipSurface(RoundedRectangle(cornerRadius: 10))
-                        .contentShape(RoundedRectangle(cornerRadius: 10))
+            TopBar {
+                Button {
+                    withAnimation(.smooth(duration: 0.2)) { model.moveToTrash.toggle() }
+                } label: {
+                    Image(systemName: model.moveToTrash ? "trash" : "flame.fill")
+                        .contentTransition(.symbolEffect(.replace))
                 }
-                .buttonStyle(.plain)
-                .help("Back")
-                .disabled(model.isRemoving)
-                Spacer()
+                .buttonStyle(PillButtonStyle(foreground: model.moveToTrash ? .secondary : .orange, height: 32, iconOnly: true))
+                .help(model.moveToTrash
+                      ? "Files go to the Trash. Click to delete them permanently."
+                      : "Files will be deleted permanently. Click to use the Trash.")
+
+                Button { isConfirming = true } label: {
+                    HStack(spacing: 6) {
+                        if model.isRemoving {
+                            ProgressView().controlSize(.mini)
+                        } else {
+                            Image(systemName: "trash.fill")
+                        }
+                        Text(model.isRemoving ? "Removing…" : "Remove")
+                    }
+                }
+                .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .red, height: 32))
+                .keyboardShortcut(.delete, modifiers: .command)
+                .help("Remove the selected items (⌘⌫)")
+                .disabled(model.checkedItems.isEmpty || model.isScanning || model.isRemoving)
             }
-            .padding(.horizontal, 22)
 
             hero(accent)
 
@@ -54,11 +66,6 @@ struct DetailView: View {
             .scrollIndicators(.never)
             .scrollEdgeEffectStyle(.soft, for: .all)
             .animation(.smooth(duration: 0.25), value: model.isScanning)
-            // A barra flutua sobre a lista, que rola por baixo dela.
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                footer
-                    .opacity(isConfirming ? 0 : 1)
-            }
         }
         .overlay {
             if isConfirming {
@@ -126,59 +133,17 @@ struct DetailView: View {
         }
         return text
     }
-
-    private var footer: some View {
-        // Cantos concêntricos: barra de 52 pt com raio 16 e botões de 40 pt com raio 10 (16 − 6 de margem).
-        HStack(spacing: 6) {
-            Button {
-                withAnimation(.smooth(duration: 0.2)) { model.moveToTrash.toggle() }
-            } label: {
-                Label(model.moveToTrash ? "To Trash" : "Delete forever",
-                      systemImage: model.moveToTrash ? "trash" : "flame.fill")
-                    .contentTransition(.symbolEffect(.replace))
-            }
-            .buttonStyle(PillButtonStyle(
-                foreground: model.moveToTrash ? .secondary : .orange,
-                weight: .medium
-            ))
-            .help(model.moveToTrash
-                  ? "Files go to the Trash. Click to delete them permanently."
-                  : "Files will be deleted permanently. Click to use the Trash.")
-
-            Spacer(minLength: 0)
-
-            Button { isConfirming = true } label: {
-                HStack(spacing: 7) {
-                    if model.isRemoving {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Image(systemName: "trash.fill")
-                    }
-                    Text(model.isRemoving ? "Removing…" : "Remove")
-                }
-                .padding(.horizontal, 4)
-            }
-            .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .red))
-            .keyboardShortcut(.delete, modifiers: .command)
-            .help("Remove the selected items (⌘⌫)")
-            .disabled(model.checkedItems.isEmpty || model.isScanning || model.isRemoving)
-        }
-        .padding(6)
-        .frame(height: 52)
-        .chipSurface(RoundedRectangle(cornerRadius: 16), fill: 0.05)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal, 22)
-        .padding(.top, 10)
-        .padding(.bottom, 20)
-    }
 }
 
-/// Botão de 40 pt e raio 10, com realce ao passar o mouse e ao pressionar.
+/// Botão de raio 10 (40 pt nos painéis, 32 pt na linha do topo), com realce ao passar o mouse e ao pressionar.
 /// Sem `solidFill`, usa o fundo e a borda padrão dos chips.
 struct PillButtonStyle: ButtonStyle {
     let foreground: Color
     var weight: Font.Weight = .semibold
     var solidFill: Color?
+    var height: CGFloat = 40
+    /// Quadrado do tamanho da altura, para botões só com símbolo.
+    var iconOnly = false
 
     func makeBody(configuration: Configuration) -> some View {
         Pill(configuration: configuration, style: self)
@@ -192,10 +157,10 @@ struct PillButtonStyle: ButtonStyle {
 
         var body: some View {
             configuration.label
-                .font(.body.weight(style.weight))
+                .font((style.height < 40 ? Font.callout : Font.body).weight(style.weight))
                 .foregroundStyle(style.foreground)
-                .padding(.horizontal, 16)
-                .frame(height: 40)
+                .padding(.horizontal, style.iconOnly ? 0 : (style.height < 40 ? 12 : 16))
+                .frame(width: style.iconOnly ? style.height : nil, height: style.height)
                 .background {
                     let shape = RoundedRectangle(cornerRadius: 10)
                     if let fill = style.solidFill {
@@ -355,5 +320,25 @@ struct ConfirmPanel<Icon: View>: View {
         .frame(maxWidth: .infinity)
         .chipSurface(RoundedRectangle(cornerRadius: 20), fill: 0.05)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
+    }
+}
+
+/// Linha do topo das telas internas: voltar à esquerda e as ações da tela à direita.
+struct TopBar<Actions: View>: View {
+    @EnvironmentObject private var model: AppModel
+    @ViewBuilder let actions: Actions
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button { model.close() } label: {
+                Image(systemName: "chevron.left")
+            }
+            .buttonStyle(PillButtonStyle(foreground: .secondary, height: 32, iconOnly: true))
+            .help("Back")
+            .disabled(model.isRemoving)
+            Spacer()
+            actions
+        }
+        .padding(.horizontal, 22)
     }
 }

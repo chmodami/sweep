@@ -24,21 +24,44 @@ struct JunkView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Button { model.close() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 32, height: 32)
-                        .chipSurface(RoundedRectangle(cornerRadius: 10))
-                        .contentShape(RoundedRectangle(cornerRadius: 10))
+            TopBar {
+                if hasResults {
+                    Button { model.scanJunk() } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .buttonStyle(PillButtonStyle(foreground: .secondary, height: 32, iconOnly: true))
+                    .help("Scan again")
+                    .disabled(model.isRemoving)
+
+                    Button { isConfirming = true } label: {
+                        HStack(spacing: 6) {
+                            if model.isRemoving {
+                                ProgressView().controlSize(.mini)
+                            } else {
+                                Image(systemName: "sparkles")
+                            }
+                            Text(model.isRemoving ? "Cleaning…" : "Clean up")
+                        }
+                    }
+                    .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .red, height: 32))
+                    .keyboardShortcut(.delete, modifiers: .command)
+                    .disabled(model.checkedJunk.isEmpty || model.isRemoving)
+                } else {
+                    Button { model.scanJunk() } label: {
+                        HStack(spacing: 6) {
+                            if model.isScanningJunk {
+                                ProgressView().controlSize(.mini)
+                            } else {
+                                Image(systemName: "sparkle.magnifyingglass")
+                            }
+                            Text(model.isScanningJunk ? "Scanning…" : "Scan for junk")
+                        }
+                    }
+                    .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .orange, height: 32))
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(model.isScanningJunk)
                 }
-                .buttonStyle(.plain)
-                .help("Back")
-                .disabled(model.isRemoving)
-                Spacer()
             }
-            .padding(.horizontal, 22)
 
             hero
 
@@ -58,9 +81,6 @@ struct JunkView: View {
             .scrollIndicators(.never)
             .scrollEdgeEffectStyle(.soft, for: .all)
             .animation(.smooth(duration: 0.25), value: hasResults)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                footer.opacity(isConfirming ? 0 : 1)
-            }
         }
         .overlay {
             if isConfirming {
@@ -113,6 +133,14 @@ struct JunkView: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 30)
+                // A varredura fica parada enquanto o pedido de permissão do macOS espera resposta.
+                if model.isScanningJunk {
+                    Label("macOS may ask for permission to read data from other apps.", systemImage: "hand.raised.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .padding(.top, 6)
+                        .transition(.opacity)
+                }
             }
         }
         .padding(.bottom, 18)
@@ -159,69 +187,6 @@ struct JunkView: View {
             parts.append(String(localized: "Leftovers and installers go to the Trash."))
         }
         return parts.joined(separator: " ")
-    }
-
-    @ViewBuilder
-    private var footer: some View {
-        // Mesmo padrão da tela de detalhes: barra de 52 pt com raio 16 e botões de 40 pt com raio 10.
-        HStack(spacing: 6) {
-            if hasResults {
-                Button { model.scanJunk() } label: {
-                    Label("Scan again", systemImage: "arrow.clockwise")
-                }
-                .buttonStyle(PillButtonStyle(foreground: .secondary, weight: .medium))
-                .disabled(model.isRemoving)
-
-                Spacer(minLength: 0)
-
-                Button { isConfirming = true } label: {
-                    HStack(spacing: 7) {
-                        if model.isRemoving {
-                            ProgressView().controlSize(.small)
-                        } else {
-                            Image(systemName: "sparkles")
-                        }
-                        Text(model.isRemoving ? "Cleaning…" : "Clean up")
-                    }
-                    .padding(.horizontal, 4)
-                }
-                .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .red))
-                .keyboardShortcut(.delete, modifiers: .command)
-                .disabled(model.checkedJunk.isEmpty || model.isRemoving)
-            } else {
-                Button { model.scanJunk() } label: {
-                    HStack(spacing: 8) {
-                        if model.isScanningJunk {
-                            ProgressView().controlSize(.small)
-                        } else {
-                            Image(systemName: "sparkle.magnifyingglass")
-                        }
-                        Text(model.isScanningJunk ? "Scanning…" : "Scan for junk")
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .orange))
-                .keyboardShortcut(.defaultAction)
-                .disabled(model.isScanningJunk)
-            }
-        }
-        .padding(6)
-        .frame(height: 52)
-        .chipSurface(RoundedRectangle(cornerRadius: 16), fill: 0.05)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .padding(.horizontal, 22)
-        .padding(.top, 10)
-        .padding(.bottom, 20)
-        .overlay(alignment: .top) {
-            // A varredura fica parada enquanto o pedido de permissão do macOS espera resposta.
-            if model.isScanningJunk {
-                Text("macOS may ask for permission to read data from other apps.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .offset(y: -12)
-                    .transition(.opacity)
-            }
-        }
     }
 }
 
