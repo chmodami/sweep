@@ -37,7 +37,7 @@ enum Remover {
             let error = removeAsAdmin(adminQueue)
             for item in adminQueue {
                 if exists(item.url) {
-                    outcome.failed.append((item, error ?? "não foi possível remover"))
+                    outcome.failed.append((item, error ?? String(localized: "could not be removed")))
                 } else {
                     outcome.removed.append(item)
                 }
@@ -92,8 +92,9 @@ enum Remover {
             return lines
         }
         let shell = commands.joined(separator: "; ")
+        let prompt = String(localized: "Sweep needs your password to remove protected files.")
         let script = """
-        do shell script "\(appleScriptEscape(shell))" with prompt "O Sweep precisa da sua senha para remover arquivos protegidos." with administrator privileges
+        do shell script "\(appleScriptEscape(shell))" with prompt "\(appleScriptEscape(prompt))" with administrator privileges
         """
         let result = run("/usr/bin/osascript", ["-e", script])
         return result.status == 0 ? nil : result.output.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -16,17 +16,17 @@ enum SortOrder: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .largest: "Maiores primeiro"
-        case .smallest: "Menores primeiro"
-        case .name: "Nome"
+        case .largest: String(localized: "Largest first")
+        case .smallest: String(localized: "Smallest first")
+        case .name: String(localized: "Name")
         }
     }
 
     var shortTitle: String {
         switch self {
-        case .largest: "Maiores"
-        case .smallest: "Menores"
-        case .name: "A–Z"
+        case .largest: String(localized: "Largest")
+        case .smallest: String(localized: "Smallest")
+        case .name: String(localized: "A–Z")
         }
     }
 
@@ -101,11 +101,11 @@ final class AppModel: ObservableObject {
     /// Abre um .app de qualquer lugar (arrastado para a janela ou escolhido no Finder).
     func open(_ url: URL) {
         guard let app = Scanner.loadApp(at: url) else {
-            errorMessage = "“\(url.lastPathComponent)” não é um aplicativo válido."
+            errorMessage = String(localized: "“\(url.lastPathComponent)” is not a valid app.")
             return
         }
         guard !app.isProtected else {
-            errorMessage = "“\(app.name)” é um app do sistema e não pode ser removido."
+            errorMessage = String(localized: "“\(app.name)” is a system app and can’t be removed.")
             return
         }
         select(app)

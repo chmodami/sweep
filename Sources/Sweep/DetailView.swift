@@ -18,7 +18,7 @@ struct DetailView: View {
                         .contentShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
-                .help("Voltar")
+                .help("Back")
                 .disabled(model.isRemoving)
                 Spacer()
             }
@@ -34,7 +34,7 @@ struct DetailView: View {
                         let maybe = model.items.filter { $0.kind == .name }
                         if !maybe.isEmpty {
                             VStack(alignment: .leading, spacing: 6) {
-                                Text("Pode ser deste app — confira")
+                                Text("Might belong to this app — check")
                                     .font(.caption.weight(.semibold))
                                     .textCase(.uppercase)
                                     .tracking(0.8)
@@ -69,7 +69,7 @@ struct DetailView: View {
                     ConfirmPanel(
                         app: app,
                         message: confirmationMessage,
-                        confirmTitle: model.moveToTrash ? "Mover para a Lixeira" : "Apagar",
+                        confirmTitle: model.moveToTrash ? String(localized: "Move to Trash") : String(localized: "Delete"),
                         onCancel: { isConfirming = false },
                         onConfirm: {
                             isConfirming = false
@@ -101,7 +101,7 @@ struct DetailView: View {
                 .contentTransition(.numericText())
                 .animation(.smooth, value: model.checkedSize)
                 .padding(.top, 6)
-            Text(model.isScanning ? "Procurando arquivos…" : "selecionados de \(Format.bytes(model.totalSize)) encontrados")
+            Text(model.isScanning ? "Looking for files…" : "selected of \(Format.bytes(model.totalSize)) found")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -110,12 +110,17 @@ struct DetailView: View {
 
     private var confirmationMessage: String {
         let items = model.checkedItems
-        let count = "\(items.count) \(items.count == 1 ? "item" : "itens") · \(Format.bytes(model.checkedSize))"
-        var text = model.moveToTrash
-            ? "\(count) vão para a Lixeira. O app será fechado se estiver aberto."
-            : "\(count) serão apagados para sempre. O app será fechado se estiver aberto."
+        let size = Format.bytes(model.checkedSize)
+        let count = items.count
+        var text = switch (model.moveToTrash, count == 1) {
+        case (true, true): String(localized: "1 item · \(size) will go to the Trash.")
+        case (true, false): String(localized: "\(count) items · \(size) will go to the Trash.")
+        case (false, true): String(localized: "1 item · \(size) will be deleted forever.")
+        case (false, false): String(localized: "\(count) items · \(size) will be deleted forever.")
+        }
+        text += " " + String(localized: "The app will be quit if it’s open.")
         if model.moveToTrash && items.contains(where: \.needsAdmin) {
-            text += " Itens protegidos do sistema são apagados direto e pedem sua senha."
+            text += " " + String(localized: "Protected system items are deleted directly and require your password.")
         }
         return text
     }
@@ -126,7 +131,7 @@ struct DetailView: View {
             Button {
                 withAnimation(.smooth(duration: 0.2)) { model.moveToTrash.toggle() }
             } label: {
-                Label(model.moveToTrash ? "Para a Lixeira" : "Apagar de vez",
+                Label(model.moveToTrash ? "To Trash" : "Delete forever",
                       systemImage: model.moveToTrash ? "trash" : "flame.fill")
                     .contentTransition(.symbolEffect(.replace))
             }
@@ -135,8 +140,8 @@ struct DetailView: View {
                 weight: .medium
             ))
             .help(model.moveToTrash
-                  ? "Os arquivos vão para a Lixeira. Clique para apagar permanentemente."
-                  : "Os arquivos serão apagados permanentemente. Clique para usar a Lixeira.")
+                  ? "Files go to the Trash. Click to delete them permanently."
+                  : "Files will be deleted permanently. Click to use the Trash.")
 
             Spacer(minLength: 0)
 
@@ -147,13 +152,13 @@ struct DetailView: View {
                     } else {
                         Image(systemName: "trash.fill")
                     }
-                    Text(model.isRemoving ? "Removendo…" : "Remover")
+                    Text(model.isRemoving ? "Removing…" : "Remove")
                 }
                 .padding(.horizontal, 4)
             }
             .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .red))
             .keyboardShortcut(.delete, modifiers: .command)
-            .help("Remover os itens selecionados (⌘⌫)")
+            .help("Remove the selected items (⌘⌫)")
             .disabled(model.checkedItems.isEmpty || model.isScanning || model.isRemoving)
         }
         .padding(6)
@@ -272,13 +277,13 @@ struct ItemRow: View {
                     Image(systemName: "magnifyingglass")
                 }
                 .buttonStyle(.borderless)
-                .help("Mostrar no Finder")
+                .help("Show in Finder")
             }
             if item.needsAdmin {
                 Image(systemName: "lock.fill")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
-                    .help("Pede senha de administrador")
+                    .help("Requires an administrator password")
             }
             Text(Format.bytes(item.size))
                 .font(.callout.weight(.medium))
@@ -319,7 +324,7 @@ struct ConfirmPanel: View {
             }
 
             VStack(spacing: 6) {
-                Text("Remover \(app.name)?")
+                Text("Remove \(app.name)?")
                     .font(.title3.weight(.semibold))
                 Text(message)
                     .font(.callout)
@@ -330,7 +335,7 @@ struct ConfirmPanel: View {
 
             HStack(spacing: 10) {
                 Button(action: onCancel) {
-                    Text("Cancelar").frame(maxWidth: .infinity)
+                    Text("Cancel").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PillButtonStyle(foreground: .primary, weight: .medium))
                 .keyboardShortcut(.cancelAction)

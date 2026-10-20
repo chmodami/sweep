@@ -16,9 +16,9 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     HStack(spacing: 6) {
-                        Text(model.search.isEmpty ? "Apps" : "Resultados")
+                        Text(model.search.isEmpty ? "Apps" : "Results")
                         if !apps.isEmpty {
-                            Text("\(apps.count)").monospacedDigit().foregroundStyle(.tertiary)
+                            Text(verbatim: "\(apps.count)").monospacedDigit().foregroundStyle(.tertiary)
                         }
                     }
                     .font(.caption.weight(.semibold))
@@ -34,7 +34,7 @@ struct HomeView: View {
                 .padding(.trailing, 4)
 
                 if apps.isEmpty {
-                    Text(model.apps.isEmpty ? "Carregando apps…" : "Nenhum app encontrado")
+                    Text(model.apps.isEmpty ? "Loading apps…" : "No apps found")
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 40)
@@ -70,8 +70,8 @@ struct HomeView: View {
             }
 
             HStack(spacing: 20) {
-                KeyHint(symbol: "arrow.up.arrow.down", label: "navegar")
-                KeyHint(symbol: "return", label: "abrir")
+                KeyHint(symbol: "arrow.up.arrow.down", label: "navigate")
+                KeyHint(symbol: "return", label: "open")
             }
             .frame(maxWidth: .infinity)
         }
@@ -111,7 +111,7 @@ struct HomeView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(.secondary)
-            TextField("Buscar app", text: $model.search)
+            TextField("Search apps", text: $model.search)
                 .textFieldStyle(.plain)
                 .font(.system(size: 17))
                 .focused($isSearchFocused)
@@ -191,7 +191,7 @@ struct SizeBar: View {
 /// Tecla desenhada + legenda, para os atalhos do rodapé.
 struct KeyHint: View {
     let symbol: String
-    let label: String
+    let label: LocalizedStringKey
 
     var body: some View {
         HStack(spacing: 7) {

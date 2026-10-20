@@ -3,12 +3,18 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>pt-BR</string>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>pt-BR</string>
+        <string>es</string>
+    </array>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>
             <key>CFBundleTypeName</key>
-            <string>Aplicativo</string>
+            <string>Application</string>
             <key>CFBundleTypeRole</key>
             <string>Viewer</string>
             <key>LSHandlerRank</key>
@@ -42,6 +48,6 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>O Sweep usa o AppleScript para pedir sua senha ao remover arquivos protegidos do sistema.</string>
+    <string>Sweep uses AppleScript to ask for your password when removing protected system files.</string>
 </dict>
 </plist>

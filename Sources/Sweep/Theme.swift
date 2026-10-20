@@ -9,33 +9,33 @@ struct ItemCategory {
 extension FoundItem {
     /// Nome amigável, ícone e cor do tipo de arquivo, a partir da pasta onde ele está.
     var category: ItemCategory {
-        if kind == .appBundle { return ItemCategory(label: "Aplicativo", symbol: "app.fill", color: .blue) }
+        if kind == .appBundle { return ItemCategory(label: String(localized: "App"), symbol: "app.fill", color: .blue) }
         let parent = url.deletingLastPathComponent().path
-        let crash = ItemCategory(label: "Relatórios de falha", symbol: "exclamationmark.triangle.fill", color: .red)
+        let crash = ItemCategory(label: String(localized: "Crash reports"), symbol: "exclamationmark.triangle.fill", color: .red)
         let categories: [(suffix: String, category: ItemCategory)] = [
-            ("/Application Support", ItemCategory(label: "Dados do app", symbol: "externaldrive.fill", color: .blue)),
-            ("/Application Scripts", ItemCategory(label: "Scripts", symbol: "scroll.fill", color: .gray)),
-            ("/Caches", ItemCategory(label: "Cache", symbol: "shippingbox.fill", color: .orange)),
+            ("/Application Support", ItemCategory(label: String(localized: "App data"), symbol: "externaldrive.fill", color: .blue)),
+            ("/Application Scripts", ItemCategory(label: String(localized: "Scripts"), symbol: "scroll.fill", color: .gray)),
+            ("/Caches", ItemCategory(label: String(localized: "Cache"), symbol: "shippingbox.fill", color: .orange)),
             ("/Caches/SentryCrash", crash),
             ("/CrashReporter", crash),
             ("/DiagnosticReports", crash),
-            ("/Containers", ItemCategory(label: "Contêiner", symbol: "cube.fill", color: .indigo)),
-            ("/Group Containers", ItemCategory(label: "Contêiner compartilhado", symbol: "square.stack.3d.up.fill", color: .indigo)),
-            ("/Cookies", ItemCategory(label: "Cookies", symbol: "circle.hexagongrid.fill", color: .brown)),
-            ("/HTTPStorages", ItemCategory(label: "Dados de rede", symbol: "network", color: .teal)),
-            ("/WebKit", ItemCategory(label: "Dados de navegação", symbol: "safari.fill", color: .cyan)),
-            ("/LaunchAgents", ItemCategory(label: "Serviço em segundo plano", symbol: "gearshape.2.fill", color: .purple)),
-            ("/LaunchDaemons", ItemCategory(label: "Serviço do sistema", symbol: "gearshape.2.fill", color: .purple)),
-            ("/PrivilegedHelperTools", ItemCategory(label: "Ferramenta auxiliar", symbol: "wrench.and.screwdriver.fill", color: .purple)),
-            ("/Logs", ItemCategory(label: "Logs", symbol: "doc.text.fill", color: .gray)),
-            ("/Preferences", ItemCategory(label: "Preferências", symbol: "slider.horizontal.3", color: .pink)),
-            ("/Preferences/ByHost", ItemCategory(label: "Preferências", symbol: "slider.horizontal.3", color: .pink)),
-            ("/Saved Application State", ItemCategory(label: "Estado das janelas", symbol: "macwindow", color: .mint)),
-            ("/receipts", ItemCategory(label: "Recibo de instalação", symbol: "doc.plaintext.fill", color: .green)),
-            ("/Applications", ItemCategory(label: "Atalho", symbol: "arrow.up.right.square.fill", color: .yellow)),
+            ("/Containers", ItemCategory(label: String(localized: "Container"), symbol: "cube.fill", color: .indigo)),
+            ("/Group Containers", ItemCategory(label: String(localized: "Shared container"), symbol: "square.stack.3d.up.fill", color: .indigo)),
+            ("/Cookies", ItemCategory(label: String(localized: "Cookies"), symbol: "circle.hexagongrid.fill", color: .brown)),
+            ("/HTTPStorages", ItemCategory(label: String(localized: "Network data"), symbol: "network", color: .teal)),
+            ("/WebKit", ItemCategory(label: String(localized: "Browsing data"), symbol: "safari.fill", color: .cyan)),
+            ("/LaunchAgents", ItemCategory(label: String(localized: "Background service"), symbol: "gearshape.2.fill", color: .purple)),
+            ("/LaunchDaemons", ItemCategory(label: String(localized: "System service"), symbol: "gearshape.2.fill", color: .purple)),
+            ("/PrivilegedHelperTools", ItemCategory(label: String(localized: "Helper tool"), symbol: "wrench.and.screwdriver.fill", color: .purple)),
+            ("/Logs", ItemCategory(label: String(localized: "Logs"), symbol: "doc.text.fill", color: .gray)),
+            ("/Preferences", ItemCategory(label: String(localized: "Preferences"), symbol: "slider.horizontal.3", color: .pink)),
+            ("/Preferences/ByHost", ItemCategory(label: String(localized: "Preferences"), symbol: "slider.horizontal.3", color: .pink)),
+            ("/Saved Application State", ItemCategory(label: String(localized: "Window state"), symbol: "macwindow", color: .mint)),
+            ("/receipts", ItemCategory(label: String(localized: "Install receipt"), symbol: "doc.plaintext.fill", color: .green)),
+            ("/Applications", ItemCategory(label: String(localized: "Shortcut"), symbol: "arrow.up.right.square.fill", color: .yellow)),
         ]
         return categories.last { parent.hasSuffix($0.suffix) }?.category
-            ?? ItemCategory(label: "Arquivo", symbol: "doc.fill", color: .gray)
+            ?? ItemCategory(label: String(localized: "File"), symbol: "doc.fill", color: .gray)
     }
 }
 

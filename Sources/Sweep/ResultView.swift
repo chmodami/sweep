@@ -24,19 +24,19 @@ struct ResultView: View {
             .scaleEffect(appeared ? 1 : 0.6)
             .padding(.bottom, 18)
 
-            Text(result.removedApp ? "\(result.app.name) removido" : "Arquivos removidos")
+            Text(result.removedApp ? "\(result.app.name) removed" : "Files removed")
                 .font(.title2.weight(.semibold))
             Text(Format.bytes(result.freed))
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .padding(.top, 8)
-            Text(result.toTrash ? "movidos para a Lixeira" : "liberados no disco")
+            Text(result.toTrash ? "moved to the Trash" : "freed on disk")
                 .foregroundStyle(.secondary)
 
             if !succeeded {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Não foi possível remover:").font(.callout.weight(.medium))
+                        Text("Couldn’t remove:").font(.callout.weight(.medium))
                         ForEach(result.failures, id: \.self) { failure in
                             Text(failure).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
                         }
@@ -45,19 +45,16 @@ struct ResultView: View {
                     .padding(14)
                 }
                 .frame(maxHeight: 150)
-                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 18))
+                .chipSurface(RoundedRectangle(cornerRadius: 14), fill: 0.05)
                 .padding(.top, 18)
             }
 
             Spacer()
 
             Button { model.close() } label: {
-                Text("Concluído")
-                    .font(.body.weight(.semibold))
-                    .frame(maxWidth: .infinity)
+                Text("Done").frame(maxWidth: .infinity)
             }
-            .buttonStyle(.glassProminent)
-            .controlSize(.extraLarge)
+            .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .accentColor))
             .keyboardShortcut(.defaultAction)
         }
         .padding(.horizontal, 22)
