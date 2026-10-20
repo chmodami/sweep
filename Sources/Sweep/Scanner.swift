@@ -26,16 +26,30 @@ enum Scanner {
 
     static func installedApps() -> [InstalledApp] {
         let folders = [URL(fileURLWithPath: "/Applications"), home.appendingPathComponent("Applications")]
-        return folders
+        // Links simbólicos apontam para um app que já está na lista; resolve e remove duplicados.
+        var seen: Set<String> = []
+        let urls = folders
             .flatMap { appBundles(in: $0, depth: 2) }
+            .map { $0.resolvingSymlinksInPath() }
+            .filter { seen.insert($0.path).inserted }
+
+        // Medir o tamanho de cada .app é a parte lenta; em paralelo fica bem mais rápido.
+        var loaded = [InstalledApp?](repeating: nil, count: urls.count)
+        let lock = NSLock()
+        DispatchQueue.concurrentPerform(iterations: urls.count) { index in
+            let app = loadApp(at: urls[index])
+            lock.withLock { loaded[index] = app }
+        }
+        return loaded
+            .compactMap { $0 }
             .filter { !$0.isProtected }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    private static func appBundles(in folder: URL, depth: Int) -> [InstalledApp] {
+    private static func appBundles(in folder: URL, depth: Int) -> [URL] {
         guard let children = try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]) else { return [] }
-        return children.flatMap { child -> [InstalledApp] in
-            if child.pathExtension == "app" { return loadApp(at: child).map { [$0] } ?? [] }
+        return children.flatMap { child -> [URL] in
+            if child.pathExtension == "app" { return [child] }
             let isDirectory = (try? child.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
             return isDirectory && depth > 1 ? appBundles(in: child, depth: depth - 1) : []
         }
@@ -47,7 +61,8 @@ enum Scanner {
             url: url,
             name: url.deletingPathExtension().lastPathComponent,
             bundleID: bundleID,
-            version: bundle.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+            version: bundle.infoDictionary?["CFBundleShortVersionString"] as? String ?? "",
+            size: size(of: url)
         )
     }
 

@@ -12,7 +12,11 @@ struct RemovalResult {
 @MainActor
 final class AppModel: ObservableObject {
     @Published var apps: [InstalledApp] = []
-    @Published var search = ""
+    @Published var search = "" {
+        didSet { highlighted = 0 }
+    }
+    /// Linha destacada na lista da tela inicial (mouse ou setas do teclado).
+    @Published var highlighted = 0
     @Published private(set) var selected: InstalledApp?
 
     @Published private(set) var items: [FoundItem] = []
@@ -25,9 +29,25 @@ final class AppModel: ObservableObject {
 
     private var signature: Signature?
 
-    var searchResults: [InstalledApp] {
+    /// Até 5 apps: os maiores quando a busca está vazia, senão os que combinam com a busca.
+    var visibleApps: [InstalledApp] {
         let query = search.trimmingCharacters(in: .whitespaces)
-        return query.isEmpty ? [] : apps.filter { $0.name.localizedCaseInsensitiveContains(query) }
+        guard !query.isEmpty else { return Array(apps.sorted { $0.size > $1.size }.prefix(5)) }
+
+        // Nome que começa com a busca vem antes de palavra que começa com ela, que vem antes de "contém".
+        func rank(_ app: InstalledApp) -> Int? {
+            let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
+            guard let range = app.name.range(of: query, options: options) else { return nil }
+            if range.lowerBound == app.name.startIndex { return 0 }
+            return app.name[app.name.index(before: range.lowerBound)] == " " ? 1 : 2
+        }
+        let ranked = apps.compactMap { app in rank(app).map { (app, $0) } }
+        return Array(ranked.sorted { $0.1 < $1.1 }.map(\.0).prefix(5))
+    }
+
+    var highlightedApp: InstalledApp? {
+        let apps = visibleApps
+        return apps.indices.contains(highlighted) ? apps[highlighted] : nil
     }
 
     var checkedItems: [FoundItem] { items.filter { checked.contains($0.url) } }
@@ -54,8 +74,8 @@ final class AppModel: ObservableObject {
     }
 
     func select(_ app: InstalledApp) {
+        // A busca é mantida: limpá-la aqui trocava a lista no meio do fade e, ao voltar, os resultados continuam lá.
         result = nil
-        search = ""
         selected = app
         scan(app)
     }

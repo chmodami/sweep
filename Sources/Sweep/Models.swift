@@ -5,6 +5,7 @@ struct InstalledApp: Identifiable, Hashable {
     let name: String
     let bundleID: String
     let version: String
+    let size: Int64
 
     var id: URL { url }
     var icon: NSImage { NSWorkspace.shared.icon(forFile: url.path) }
@@ -37,35 +38,6 @@ struct FoundItem: Identifiable, Hashable {
     let needsAdmin: Bool
 
     var id: URL { url }
-
-    /// Nome amigável do tipo de arquivo, a partir da pasta onde ele está.
-    var category: String {
-        if kind == .appBundle { return "Aplicativo" }
-        let parent = url.deletingLastPathComponent().path
-        let categories: [(suffix: String, label: String)] = [
-            ("/Application Support", "Dados do app"),
-            ("/Application Scripts", "Scripts"),
-            ("/Caches", "Cache"),
-            ("/Caches/SentryCrash", "Relatórios de falha"),
-            ("/CrashReporter", "Relatórios de falha"),
-            ("/DiagnosticReports", "Relatórios de falha"),
-            ("/Containers", "Contêiner"),
-            ("/Group Containers", "Contêiner compartilhado"),
-            ("/Cookies", "Cookies"),
-            ("/HTTPStorages", "Dados de rede"),
-            ("/WebKit", "Dados de navegação"),
-            ("/LaunchAgents", "Serviço em segundo plano"),
-            ("/LaunchDaemons", "Serviço do sistema"),
-            ("/PrivilegedHelperTools", "Ferramenta auxiliar"),
-            ("/Logs", "Logs"),
-            ("/Preferences", "Preferências"),
-            ("/Preferences/ByHost", "Preferências"),
-            ("/Saved Application State", "Estado das janelas"),
-            ("/receipts", "Recibo de instalação"),
-            ("/Applications", "Atalho"),
-        ]
-        return categories.last { parent.hasSuffix($0.suffix) }?.label ?? "Arquivo"
-    }
 }
 
 enum Format {
