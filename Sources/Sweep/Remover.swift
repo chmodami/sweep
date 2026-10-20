@@ -18,7 +18,7 @@ enum Remover {
         var outcome = Outcome()
         var adminQueue: [FoundItem] = []
         for item in items {
-            prepare(item)
+            prepare(item.url)
             if item.needsAdmin { adminQueue.append(item); continue }
             do {
                 if toTrash {
@@ -67,15 +67,15 @@ enum Remover {
     }
 
     /// Descarrega serviços e limpa o cache de preferências antes de remover os arquivos.
-    private static func prepare(_ item: FoundItem) {
-        let parent = item.url.deletingLastPathComponent().path
+    static func prepare(_ url: URL) {
+        let parent = url.deletingLastPathComponent().path
         let library = fm.homeDirectoryForCurrentUser.appendingPathComponent("Library").path
 
-        if parent == library + "/Preferences", item.url.pathExtension == "plist" {
+        if parent == library + "/Preferences", url.pathExtension == "plist" {
             // Sem isso o cfprefsd pode regravar o .plist que acabou de ser apagado.
-            run("/usr/bin/defaults", ["delete", item.url.deletingPathExtension().lastPathComponent])
+            run("/usr/bin/defaults", ["delete", url.deletingPathExtension().lastPathComponent])
         } else if parent == library + "/LaunchAgents" {
-            run("/bin/launchctl", ["bootout", "gui/\(getuid())", item.url.path])
+            run("/bin/launchctl", ["bootout", "gui/\(getuid())", url.path])
         }
     }
 
@@ -116,7 +116,7 @@ enum Remover {
     }
 
     @discardableResult
-    private static func run(_ tool: String, _ arguments: [String]) -> (status: Int32, output: String) {
+    static func run(_ tool: String, _ arguments: [String]) -> (status: Int32, output: String) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: tool)
         process.arguments = arguments

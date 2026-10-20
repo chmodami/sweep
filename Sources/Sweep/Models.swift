@@ -51,3 +51,19 @@ enum Format {
         return path.hasPrefix(home + "/") ? "~" + path.dropFirst(home.count) : path
     }
 }
+
+/// Capacidade e espaço livre do disco de inicialização.
+struct DiskUsage: Equatable {
+    let total: Int64
+    let free: Int64
+
+    var used: Int64 { max(total - free, 0) }
+
+    static func current() -> DiskUsage? {
+        let keys: Set<URLResourceKey> = [.volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey]
+        guard let values = try? URL(fileURLWithPath: "/").resourceValues(forKeys: keys),
+              let total = values.volumeTotalCapacity,
+              let free = values.volumeAvailableCapacityForImportantUsage else { return nil }
+        return DiskUsage(total: Int64(total), free: free)
+    }
+}

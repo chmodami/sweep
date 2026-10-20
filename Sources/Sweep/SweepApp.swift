@@ -34,6 +34,7 @@ struct RootView: View {
 
     private var glowColor: Color {
         if let result = model.result { return result.failures.isEmpty ? .green : .orange }
+        if model.isShowingJunk { return .orange }
         return Accent.color(for: model.selected ?? model.highlightedApp)
     }
 
@@ -45,6 +46,8 @@ struct RootView: View {
                     ResultView(result: result)
                 } else if let app = model.selected {
                     DetailView(app: app)
+                } else if model.isShowingJunk {
+                    JunkView()
                 } else {
                     HomeView()
                 }
@@ -54,10 +57,11 @@ struct RootView: View {
             .transition(.opacity)
         }
         // Altura fixa: redimensionar a janela entre telas causava saltos na transição.
-        .frame(width: 460, height: 600)
+        .frame(width: 460, height: 660)
         .containerBackground(.thickMaterial, for: .window)
         .animation(.smooth(duration: 0.28), value: model.selected)
         .animation(.smooth(duration: 0.28), value: model.result == nil)
+        .animation(.smooth(duration: 0.28), value: model.isShowingJunk)
         .alert("Sweep", isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })) {
             Button("OK") {}
         } message: {
@@ -65,6 +69,11 @@ struct RootView: View {
         }
         // Na abertura a frio o SwiftUI entrega o arquivo aqui, e não ao AppDelegate.
         .onOpenURL { url in if !model.isRemoving { model.open(url) } }
-        .onAppear { model.reloadApps() }
+        .onAppear {
+            model.reloadApps()
+            // Atalhos para testes: `open -a Sweep --args -SweepOpenJunk YES [-SweepScanJunk YES]`.
+            if UserDefaults.standard.bool(forKey: "SweepOpenJunk") { model.openJunk() }
+            if UserDefaults.standard.bool(forKey: "SweepScanJunk") { model.scanJunk() }
+        }
     }
 }

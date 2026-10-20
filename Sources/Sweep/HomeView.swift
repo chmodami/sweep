@@ -11,7 +11,13 @@ struct HomeView: View {
         let largest = max(model.apps.map(\.size).max() ?? 1, 1)
 
         VStack(alignment: .leading, spacing: 20) {
-            searchField
+            VStack(spacing: 12) {
+                searchField
+                if model.search.isEmpty {
+                    JunkCard().transition(.opacity)
+                }
+            }
+            .animation(.smooth(duration: 0.2), value: model.search.isEmpty)
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {

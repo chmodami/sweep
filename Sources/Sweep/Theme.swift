@@ -123,3 +123,25 @@ struct CheckCircle: View {
             .contentTransition(.symbolEffect(.replace))
     }
 }
+
+extension Color {
+    /// Cor com uma variação para o modo claro e outra para o escuro.
+    init(light: UInt32, dark: UInt32) {
+        func color(_ hex: UInt32) -> NSColor {
+            NSColor(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
+                    blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+        }
+        self.init(nsColor: NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? color(dark) : color(light)
+        })
+    }
+}
+
+/// Cores dos gráficos, validadas com o validate_palette.js da skill de dataviz (claro e escuro):
+/// azul e âmbar passam em separação para daltonismo; o âmbar tem contraste baixo no claro,
+/// por isso todo gráfico mostra os valores escritos na legenda.
+enum ChartPalette {
+    static let apps = Color(light: 0x007AFF, dark: 0x0A84FF)
+    static let other = Color(light: 0xC77700, dark: 0xC27A16)
+    static let free = Color.primary.opacity(0.08)
+}

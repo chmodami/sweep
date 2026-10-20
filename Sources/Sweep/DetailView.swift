@@ -67,7 +67,7 @@ struct DetailView: View {
                         .onTapGesture { isConfirming = false }
                         .transition(.opacity)
                     ConfirmPanel(
-                        app: app,
+                        title: String(localized: "Remove \(app.name)?"),
                         message: confirmationMessage,
                         confirmTitle: model.moveToTrash ? String(localized: "Move to Trash") : String(localized: "Delete"),
                         onCancel: { isConfirming = false },
@@ -75,7 +75,9 @@ struct DetailView: View {
                             isConfirming = false
                             model.removeChecked()
                         }
-                    )
+                    ) {
+                        Image(nsImage: app.icon).resizable().frame(width: 60, height: 60)
+                    }
                     .padding(14)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -267,6 +269,7 @@ struct ItemRow: View {
                     .truncationMode(.middle)
             }
             .help(item.url.path)
+            .layoutPriority(1)
 
             Spacer(minLength: 8)
 
@@ -301,19 +304,18 @@ struct ItemRow: View {
 }
 
 /// Confirmação da remoção, no lugar do diálogo padrão do sistema.
-struct ConfirmPanel: View {
-    let app: InstalledApp
+struct ConfirmPanel<Icon: View>: View {
+    let title: String
     let message: String
     let confirmTitle: String
     let onCancel: () -> Void
     let onConfirm: () -> Void
+    @ViewBuilder let icon: Icon
 
     var body: some View {
         VStack(spacing: 18) {
             ZStack(alignment: .bottomTrailing) {
-                Image(nsImage: app.icon)
-                    .resizable()
-                    .frame(width: 60, height: 60)
+                icon
                 Image(systemName: "trash.fill")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.white)
@@ -324,7 +326,7 @@ struct ConfirmPanel: View {
             }
 
             VStack(spacing: 6) {
-                Text("Remove \(app.name)?")
+                Text(title)
                     .font(.title3.weight(.semibold))
                 Text(message)
                     .font(.callout)

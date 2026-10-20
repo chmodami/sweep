@@ -24,7 +24,7 @@ struct ResultView: View {
             .scaleEffect(appeared ? 1 : 0.6)
             .padding(.bottom, 18)
 
-            Text(result.removedApp ? "\(result.app.name) removed" : "Files removed")
+            Text(result.title)
                 .font(.title2.weight(.semibold))
             Text(Format.bytes(result.freed))
                 .font(.system(size: 34, weight: .bold, design: .rounded))
@@ -54,7 +54,7 @@ struct ResultView: View {
             Button { model.close() } label: {
                 Text("Done").frame(maxWidth: .infinity)
             }
-            .buttonStyle(PillButtonStyle(foreground: .white, solidFill: .accentColor))
+            .buttonStyle(PillButtonStyle(foreground: .white, solidFill: ChartPalette.apps))
             .keyboardShortcut(.defaultAction)
         }
         .padding(.horizontal, 22)

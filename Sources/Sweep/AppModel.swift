@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct RemovalResult {
-    let app: InstalledApp
-    let removedApp: Bool
+    let title: String
     let removedCount: Int
     let freed: Int64
     let toTrash: Bool
@@ -59,6 +58,19 @@ final class AppModel: ObservableObject {
 
     private var signature: Signature?
 
+    // Lixo acumulado
+    @Published private(set) var isShowingJunk = false
+    @Published private(set) var junkGroups: [JunkGroup] = []
+    @Published var junkChecked: Set<String> = []
+    @Published private(set) var isScanningJunk = false
+    @Published private(set) var hasScannedJunk = false
+    @Published private(set) var disk: DiskUsage?
+    var appsTotal: Int64 { apps.reduce(0) { $0 + $1.size } }
+
+    var checkedJunk: [JunkGroup] { junkGroups.filter { junkChecked.contains($0.id) } }
+    var junkTotal: Int64 { junkGroups.reduce(0) { $0 + $1.size } }
+    var checkedJunkSize: Int64 { checkedJunk.reduce(0) { $0 + $1.size } }
+
     @Published var sortOrder: SortOrder = .largest {
         didSet { highlighted = 0 }
     }
@@ -93,6 +105,7 @@ final class AppModel: ObservableObject {
     var checkedSize: Int64 { checkedItems.reduce(0) { $0 + $1.size } }
 
     func reloadApps() {
+        disk = DiskUsage.current()
         Task {
             apps = await Task.detached { Scanner.installedApps() }.value
         }
@@ -120,6 +133,7 @@ final class AppModel: ObservableObject {
 
     /// Volta para a tela inicial.
     func close() {
+        isShowingJunk = false
         selected = nil
         result = nil
         items = []
@@ -157,14 +171,55 @@ final class AppModel: ObservableObject {
                 Remover.remove(targets, app: app, signature: signature, toTrash: toTrash)
             }.value
             isRemoving = false
+            let removedApp = outcome.removed.contains { $0.kind == .appBundle }
             result = RemovalResult(
-                app: app,
-                removedApp: outcome.removed.contains { $0.kind == .appBundle },
+                title: removedApp ? String(localized: "\(app.name) removed") : String(localized: "Files removed"),
                 removedCount: outcome.removed.count,
                 freed: outcome.removed.reduce(0) { $0 + $1.size },
                 toTrash: toTrash,
                 failures: outcome.failed.map { "\(Format.path($0.item.url)) — \($0.reason)" }
             )
+            reloadApps()
+        }
+    }
+
+    // MARK: - Lixo acumulado
+
+    func scanJunk() {
+        guard !isScanningJunk else { return }
+        isScanningJunk = true
+        Task {
+            let groups = await Task.detached { JunkScanner.scan() }.value
+            junkGroups = groups
+            // Itens que podem ser falso positivo (e a Lixeira, que não tem volta) começam desmarcados.
+            junkChecked = Set(groups.filter(\.isCheckedByDefault).map(\.id))
+            isScanningJunk = false
+            hasScannedJunk = true
+        }
+    }
+
+    /// Abre a tela de limpeza; a varredura só começa quando a pessoa pede.
+    func openJunk() {
+        result = nil
+        disk = DiskUsage.current()
+        isShowingJunk = true
+    }
+
+    func cleanJunk() {
+        let targets = checkedJunk
+        isRemoving = true
+        Task {
+            let outcome = await Task.detached { JunkCleaner.clean(targets) }.value
+            isRemoving = false
+            result = RemovalResult(
+                title: String(localized: "Cleanup complete"),
+                removedCount: outcome.removedCount,
+                freed: outcome.freed,
+                toTrash: false,
+                failures: outcome.failures
+            )
+            hasScannedJunk = false
+            scanJunk()
             reloadApps()
         }
     }
