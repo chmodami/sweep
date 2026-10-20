@@ -43,7 +43,9 @@ struct DetailView: View {
                     }
                     .padding(.horizontal, 22)
                     .padding(.vertical, 4)
-                    .transition(.opacity.combined(with: .offset(y: 8)))
+                    // Anima a lista como um bloco; sem isso cada linha animava a própria posição a partir do zero.
+                    .geometryGroup()
+                    .transition(.opacity)
                 }
             }
             .scrollIndicators(.never)
@@ -151,9 +153,8 @@ struct ItemCard: View {
     let accent: Color
 
     var body: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                if index > 0 { Divider().padding(.leading, 86) }
+        VStack(spacing: 6) {
+            ForEach(items) { item in
                 ItemRow(item: item, accent: accent, isOn: Binding(
                     get: { model.checked.contains(item.url) },
                     set: { isOn in
@@ -162,8 +163,6 @@ struct ItemCard: View {
                 ))
             }
         }
-        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Color.primary.opacity(0.07)))
     }
 }
 
@@ -227,6 +226,7 @@ struct ItemRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+        .background(Color.primary.opacity(isHovered ? 0.08 : 0.05), in: RoundedRectangle(cornerRadius: 14))
         .opacity(isOn ? 1 : 0.5)
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(.smooth(duration: 0.15)) { isOn.toggle() } }

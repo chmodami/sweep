@@ -50,10 +50,8 @@ struct RootView: View {
                 }
             }
             .padding(.top, 30) // espaço para os botões da janela
-            .transition(.asymmetric(
-                insertion: .opacity.combined(with: .scale(scale: 0.98)),
-                removal: .opacity
-            ))
+            .geometryGroup()
+            .transition(.opacity)
         }
         // Altura fixa: redimensionar a janela entre telas causava saltos na transição.
         .frame(width: 460, height: 600)
